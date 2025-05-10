@@ -1,0 +1,341 @@
+{
+  "address": "7DmaWof2zqAwJXnBWyFrpQa4dXUkGVaB5WqSj5QpobaK",
+  "metadata": {
+    "name": "prediction_village",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "generate_income",
+      "discriminator": [
+        79,
+        224,
+        119,
+        150,
+        186,
+        71,
+        225,
+        66
+      ],
+      "accounts": [
+        {
+          "name": "game",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "init_game",
+      "discriminator": [
+        251,
+        46,
+        12,
+        208,
+        184,
+        148,
+        157,
+        73
+      ],
+      "accounts": [
+        {
+          "name": "game",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "payer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "restart_game",
+      "discriminator": [
+        16,
+        197,
+        136,
+        154,
+        109,
+        220,
+        184,
+        140
+      ],
+      "accounts": [
+        {
+          "name": "game",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Game",
+      "discriminator": [
+        27,
+        90,
+        166,
+        125,
+        74,
+        100,
+        121,
+        18
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "StatusIsNotInProgress",
+      "msg": "The game status is not currently set to InProgress."
+    },
+    {
+      "code": 6001,
+      "name": "LightForcesKeyMismatch",
+      "msg": "The light forces key mismatch."
+    },
+    {
+      "code": 6002,
+      "name": "DarkForcesKeyMismatch",
+      "msg": "The dark forces key mismatch."
+    },
+    {
+      "code": 6003,
+      "name": "GameInProgress",
+      "msg": "The game is in progress."
+    }
+  ],
+  "types": [
+    {
+      "name": "Game",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "light_forces",
+            "type": {
+              "defined": {
+                "name": "Village"
+              }
+            }
+          },
+          {
+            "name": "dark_forces",
+            "type": {
+              "defined": {
+                "name": "Village"
+              }
+            }
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "GameStatus"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "GameStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "InProgress"
+          },
+          {
+            "name": "Finished",
+            "fields": [
+              "u8"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Position",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "x",
+            "type": "u32"
+          },
+          {
+            "name": "y",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Resources",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "gold",
+            "type": "u32"
+          },
+          {
+            "name": "gold_income",
+            "type": "u32"
+          },
+          {
+            "name": "technologies",
+            "type": "u32"
+          },
+          {
+            "name": "technologies_income",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TownHall",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "level",
+            "type": "u8"
+          },
+          {
+            "name": "health",
+            "type": "u32"
+          },
+          {
+            "name": "damage",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Village",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "town_hall",
+            "type": {
+              "defined": {
+                "name": "TownHall"
+              }
+            }
+          },
+          {
+            "name": "gold_mines",
+            "type": "bytes"
+          },
+          {
+            "name": "barracks",
+            "type": "bytes"
+          },
+          {
+            "name": "laboratories",
+            "type": "bytes"
+          },
+          {
+            "name": "warriors",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "Warrior"
+                }
+              }
+            }
+          },
+          {
+            "name": "resources",
+            "type": {
+              "defined": {
+                "name": "Resources"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Warrior",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "level",
+            "type": "u8"
+          },
+          {
+            "name": "health",
+            "type": "u32"
+          },
+          {
+            "name": "damage",
+            "type": "u32"
+          },
+          {
+            "name": "position",
+            "type": {
+              "defined": {
+                "name": "Position"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

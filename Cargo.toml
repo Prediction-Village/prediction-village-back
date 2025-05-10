@@ -1,0 +1,6 @@
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace]
+resolver = "2"
+members = ["crates/services/programs_executor"]
