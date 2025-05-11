@@ -1,6 +1,5 @@
-use anchor_client::solana_sdk::signer::keypair::read_keypair_file;
-use anchor_client::{Client, Cluster};
 use serde_json::Value;
+use solana_client::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::signature::Keypair;
@@ -8,32 +7,27 @@ use solana_sdk::signer::Signer;
 use solana_sdk::transaction::Transaction;
 use std::fs::File;
 use std::path::Path;
-use std::str::FromStr;
 use anyhow::Result;
-use std::rc::Rc;
 
-lazy_static::lazy_static! {
-    static ref IDL_PATH: String = "../../../assets/idl/prediction_village.json".to_string();
-    static ref KEY_PATH: String = shellexpand::tilde("~/.config/solana/id.json").to_string();
-    static ref PROGRAM_ID: Pubkey = Pubkey::from_str("7DmaWof2zqAwJXnBWyFrpQa4dXUkGVaB5WqSj5QpobaK").unwrap();
-}
+use crate::utils::{get_game_pda, get_payer};
+use crate::variables::{IDL_PATH, PROGRAM_ID, SOLANA_RPC_URL};
 
 pub struct ProgramsExecutor {
     pub payer_bytes: [u8; 64],
     pub game_pda: Pubkey,
+    pub rpc_client: RpcClient,
 }
 
 impl ProgramsExecutor {
-    pub fn new() -> Result<Self> {
-        let payer = read_keypair_file(&*KEY_PATH).map_err(|e| anyhow::anyhow!("Failed to read keypair file: {}", e))?;
+    pub async fn new() -> Result<Self> {
+        let payer =  get_payer().await?;
         let payer_bytes = payer.to_bytes();
 
-        let (game_pda, _) = Pubkey::find_program_address(
-            &[b"game", payer.pubkey().as_ref()],
-            &PROGRAM_ID,
-        );
+        let game_pda = get_game_pda()?;
 
-        Ok(Self { payer_bytes, game_pda })
+        let rpc_client = RpcClient::new(SOLANA_RPC_URL.clone());
+
+        Ok(Self { payer_bytes, game_pda, rpc_client })
     }
 
     pub fn init_game(&self) -> Result<()> {
@@ -106,28 +100,21 @@ impl ProgramsExecutor {
             .collect())
     }
 
-    pub fn send_and_confirm_transaction(&self, instructions: Vec<Instruction>) {
+    pub fn send_and_confirm_transaction(&self, instructions: Vec<Instruction>) -> anyhow::Result<()> {
         let payer = self.payer();
-        let payer_clonned = self.payer();
 
-        tokio::task::spawn_blocking(move || {
-            let client = Client::new(
-                Cluster::Devnet,
-                Rc::new(payer)
-            );
-    
-            let program = client.program(*PROGRAM_ID).unwrap();
-            let blockhash = program.rpc().get_latest_blockhash().unwrap();
+        let block_hash = self.rpc_client.get_latest_blockhash()?;
 
-            let tx = Transaction::new_signed_with_payer(
-                &instructions,
-                Some(&program.payer()),
-                &[&payer_clonned],
-                blockhash,
-            );
+        let tx = Transaction::new_signed_with_payer(
+            &instructions,
+            Some(&payer.pubkey()),
+            &[&payer],
+            block_hash,
+        );
 
-            let sig = program.rpc().send_and_confirm_transaction(&tx).unwrap();
-            println!("✅ Signature: {}", sig);
-        });
+        let sig = self.rpc_client.send_and_confirm_transaction(&tx)?;
+        println!("✅ Signature: {}", sig);
+
+        Ok(())
     }
 }
